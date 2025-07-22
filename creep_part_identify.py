@@ -6,8 +6,22 @@ from IPython.core.display import display, HTML
 display(HTML("<style>.container { width:100% !important; }</style>"))
 
 class ZoomPan:
+    """
+    Enable interactive zooming and panning on a matplotlib Axes using mouse scroll and drag.
+
+    Attributes:
+        press: Stores mouse press position and data limits during pan.
+        cur_xlim: Current x-axis limits.
+        cur_ylim: Current y-axis limits.
+        x0, y0: Initial mouse press position.
+        x1, y1: Mouse release position.
+        xpress, ypress: Mouse position at press event.
+    """
     "Scrolling for zoom on interactive plot from: https://stackoverflow.com/users/1629298/seadoodude"
     def __init__(self):
+        """
+        Initialize ZoomPan instance variables for storing pan/zoom state.
+        """
         self.press = None
         self.cur_xlim = None
         self.cur_ylim = None
@@ -20,6 +34,16 @@ class ZoomPan:
 
 
     def zoom_factory(self, ax, base_scale = 2.):
+        """
+        Connect mouse scroll event on the given Axes to zoom functionality.
+
+        Args:
+            ax (matplotlib.axes.Axes): The axes to attach zoom functionality.
+            base_scale (float, optional): The zoom scale factor per scroll step. Default is 2.
+
+        Returns:
+            function: The event handler function connected to the scroll event.
+        """
         def zoom(event):
             cur_xlim = ax.get_xlim()
             cur_ylim = ax.get_ylim()
@@ -54,6 +78,15 @@ class ZoomPan:
         return zoom
 
     def pan_factory(self, ax):
+        """
+        Connect mouse drag events on the given Axes to pan functionality.
+
+        Args:
+            ax (matplotlib.axes.Axes): The axes to attach pan functionality.
+
+        Returns:
+            function: The event handler function connected to mouse motion during pan.
+        """
         def onPress(event):
             if event.inaxes != ax: return
             self.cur_xlim = ax.get_xlim()
@@ -88,6 +121,21 @@ class ZoomPan:
         return onMotion
 
 def creep_event_dataframe(dataframe,duration, start, creep_data,creepmeter):
+    """
+    Extract creep event data slices based on start times and durations from continuous creep data.
+
+    Args:
+        dataframe (pd.DataFrame): DataFrame containing creep event metadata including 'og_index'.
+        duration (list or array-like): Duration of each creep event in hours.
+        start (pd.Series): Start times for each creep event.
+        creep_data (pd.DataFrame): Continuous creep data with columns 'Time', 'Creep', 'vel', 'acc'.
+        creepmeter (str): Identifier for creepmeter; special case for 'XHR' creepmeter index 4.
+
+    Returns:
+        dict: Dictionary mapping creep event indices to DataFrames of event data with columns
+              ['Time', 'Slip', 'Velocity', 'Acceleration'].
+        np.ndarray: Array of creep event indices.
+    """
     dataframes={}
     creep_index = np.array(dataframe.og_index)
     for j in range(len(dataframe)):
@@ -112,6 +160,19 @@ def creep_event_dataframe(dataframe,duration, start, creep_data,creepmeter):
     
 
 def creep_separator(dataframe_data,dataframe_events,creepmeter):
+    """
+    Plot each creep event with interactive zoom and pan to manually identify phase points.
+
+    Allows the user to select up to 5 points per event from the plot, filling missing points with NaNs.
+
+    Args:
+        dataframe_data (dict): Dictionary of creep event DataFrames with keys as indices.
+        dataframe_events (pd.DataFrame): DataFrame containing creep event metadata.
+        creepmeter (str): Identifier used for saving the resulting phase DataFrame.
+
+    Returns:
+        pd.DataFrame: DataFrame containing selected phase points for each creep event, saved to CSV.
+    """
     for i in range(len(dataframe_events)):
         print(i)
         plt.close('all')

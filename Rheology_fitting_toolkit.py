@@ -11,6 +11,17 @@ import pickle
 ###################################################################################################
 @jit(nopython=True,error_model = 'numpy')
 def Linear_viscous(optimized_par,OBS_Time):
+    """
+Compute displacement using a linear viscous rheology.
+
+Args:
+    optimized_par (list): [T0, Tau, V_0], model parameters.
+    OBS_Time (array_like): Observation time values.
+
+Returns:
+    array_like: Modelled displacement using linear viscous flow.
+"""
+
     T0 = optimized_par[0]
     Tau = optimized_par[1]
     V_0 = optimized_par[2] 
@@ -19,6 +30,17 @@ def Linear_viscous(optimized_par,OBS_Time):
 
 @jit(nopython=True,error_model = 'numpy')
 def Linear(optimized_par,OBS_Time):
+    """
+Compute displacement using a linear (constant velocity) model.
+
+Args:
+    optimized_par (list): [Vs, K], model parameters.
+    OBS_Time (array_like): Observation time values.
+
+Returns:
+    array_like: Linear slip over time.
+"""
+
     Vs = optimized_par[0]
     K = optimized_par[1]
     Fit_line = Vs*OBS_Time + K
@@ -26,6 +48,17 @@ def Linear(optimized_par,OBS_Time):
 
 @jit(nopython=True,error_model = 'numpy')
 def Power_law_viscous(optimized_par,OBS_Time):
+    """
+Compute displacement using a power-law viscous rheology.
+
+Args:
+    optimized_par (list): [T0, Tau, V_0, n], model parameters.
+    OBS_Time (array_like): Observation time values.
+
+Returns:
+    array_like: Modelled displacement using power-law flow.
+"""
+
     T0 = optimized_par[0]
     Tau = optimized_par[1]
     V_0 = optimized_par[2]
@@ -35,6 +68,17 @@ def Power_law_viscous(optimized_par,OBS_Time):
 
 @jit(nopython=True,error_model = 'numpy')
 def Velocity_strengthening_friction(optimized_par,OBS_Time):
+    """
+Compute displacement using velocity-strengthening friction (logarithmic form).
+
+Args:
+    optimized_par (list): [T0, Tau, V_0], model parameters.
+    OBS_Time (array_like): Observation time values.
+
+Returns:
+    array_like: Modelled displacement using velocity-strengthening friction.
+"""
+
     T0 = optimized_par[0]
     Tau = optimized_par[1]
     V_0 = optimized_par[2]   
@@ -44,6 +88,17 @@ def Velocity_strengthening_friction(optimized_par,OBS_Time):
 
 @jit(nopython=True,error_model = 'numpy')
 def Velocity_strengthening_friction_bSS(optimized_par,OBS_Time):
+    """
+Compute displacement using velocity-strengthening friction below steady state.
+
+Args:
+    optimized_par (list): [T0, Tau, V_0, A_B], model parameters.
+    OBS_Time (array_like): Observation time values.
+
+Returns:
+    array_like: Modelled displacement using below steady-state form.
+"""
+
     T0 = optimized_par[0]
     Tau = optimized_par[1]
     V_0 = optimized_par[2]
@@ -54,6 +109,17 @@ def Velocity_strengthening_friction_bSS(optimized_par,OBS_Time):
 
 @jit(nopython=True,error_model = 'numpy')
 def Velocity_strengthening_friction_aSS(optimized_par, OBS_Time):
+    """
+Compute displacement using velocity-strengthening friction above steady state.
+
+Args:
+    optimized_par (list): [T0, ta, V_0, t1], model parameters.
+    OBS_Time (array_like): Observation time values.
+
+Returns:
+    array_like: Modelled displacement using above steady-state form.
+"""
+
     T0 = optimized_par[0]
     ta = optimized_par[1]
     V_0 = optimized_par[2]
@@ -62,18 +128,26 @@ def Velocity_strengthening_friction_aSS(optimized_par, OBS_Time):
     Rheo_guess = V_0*t1*np.log(1-(ta/t1)*(1-np.exp((OBS_Time - T0)/ta)))
     return Rheo_guess
 
-@jit(nopython=True,error_model = 'numpy')
-def Rate_dependent_friction(optimized_par, OBS_Time):
-    T0 = optimized_par[0]
-    ta = optimized_par[1]
-    V_0 = optimized_par[2]
-    V_0L = optimized_par[3]
-    
-    Rheo_guess = V_0*ta*np.log(1+(V_0L)*(np.exp((OBS_Time - T0)/ta)-1))
-    return Rheo_guess
-
 ###################################################################################################
 def LNV_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phases,columns,j,CREEPMETER,file1):
+    """
+Compute model-data misfit for linear–viscous  model.
+
+Args:
+    optimized_par (list): Model parameters [Ts, Vs, K, T01, S1, Tau1, V01, T02, S2].
+    OBS_Time (array_like): Observation time values.
+    OBS_Data (array_like): Observed slip values.
+    cov_matrix_inverse (ndarray): Inverse of data covariance matrix.
+    no_phases (int): Number of deformation phases (not used).
+    columns (int): Number of model columns (not used).
+    j (int): Model iteration index (not used).
+    CREEPMETER (str): Creepmeter name (not used).
+    file1 (file object): File handle to write misfit ratio.
+
+Returns:
+    float: Normalised misfit between model and data.
+"""
+
     Ts = optimized_par[0]
     Vs = optimized_par[1]
     K = optimized_par[2]
@@ -104,6 +178,18 @@ def LNV_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phases,c
 
 
 def LNV_dromedary_plot(optimized_par,OBS_Time,no_phases):
+    """
+Generate synthetic slip for linear–viscous model.
+
+Args:
+    optimized_par (list): Model parameters [Ts, Vs, K, T01, S1, Tau1, V01, T02, S2].
+    OBS_Time (array_like): Observation time values.
+    no_phases (int): Number of deformation phases (not used).
+
+Returns:
+    array_like: Synthetic slip over time.
+"""
+
     Ts = optimized_par[0]
     Vs = optimized_par[1]
     K = optimized_par[2]
@@ -128,6 +214,24 @@ def LNV_dromedary_plot(optimized_par,OBS_Time,no_phases):
 
 ###################################################################################################
 def VSF_SS_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phases,columns,j,CREEPMETER,file1):
+    """
+Compute misfit for velocity-strengthening friction model (steady-state form).
+
+Args:
+    optimized_par (list): Model parameters [Ts, Vs, K, T01, S1, Tau1, V01, T02, S2].
+    OBS_Time (array_like): Observation time values.
+    OBS_Data (array_like): Observed slip values.
+    cov_matrix_inverse (ndarray): Inverse of data covariance matrix.
+    no_phases (int): Number of deformation phases (not used).
+    columns (int): Number of model columns (not used).
+    j (int): Model iteration index (not used).
+    CREEPMETER (str): Creepmeter name (not used).
+    file1 (file object): File handle to write misfit ratio.
+
+Returns:
+    float: Normalised misfit between model and data.
+"""
+
     Ts = optimized_par[0]
     Vs = optimized_par[1]
     K = optimized_par[2]
@@ -164,6 +268,18 @@ def VSF_SS_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phase
 
 
 def VSF_dromedary_plot(optimized_par,OBS_Time,no_phases):
+    """
+Generate synthetic slip for velocity-strengthening friction model (steady-state form).
+
+Args:
+    optimized_par (list): Model parameters [Ts, Vs, K, T01, S1, Tau1, V01, T02, S2].
+    OBS_Time (array_like): Observation time values.
+    no_phases (int): Number of deformation phases (not used).
+
+Returns:
+    array_like: Synthetic slip over time.
+"""
+
     Ts = optimized_par[0]
     Vs = optimized_par[1]
     K = optimized_par[2]
@@ -190,6 +306,24 @@ def VSF_dromedary_plot(optimized_par,OBS_Time,no_phases):
 ###################################################################################################
 
 def VSF_bSS_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phases,columns,j,CREEPMETER,file1):
+    """
+Compute misfit for velocity-strengthening friction model (below steady state).
+
+Args:
+    optimized_par (list): Model parameters [Ts, Vs, K, T01, S1, Tau1, V01, A_B1, T02, S2].
+    OBS_Time (array_like): Observation time values.
+    OBS_Data (array_like): Observed slip values.
+    cov_matrix_inverse (ndarray): Inverse of data covariance matrix.
+    no_phases (int): Number of deformation phases (not used).
+    columns (int): Number of model columns (not used).
+    j (int): Model iteration index (not used).
+    CREEPMETER (str): Creepmeter name (not used).
+    file1 (file object): File handle to write misfit ratio.
+
+Returns:
+    float: Normalised misfit between model and data.
+"""
+
     Ts = optimized_par[0]
     Vs = optimized_par[1]
     K = optimized_par[2]
@@ -227,6 +361,18 @@ def VSF_bSS_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phas
     return ratio
 
 def VSF_bSS_dromedary_plot(optimized_par,OBS_Time,no_phases):
+    """
+Generate synthetic slip for velocity-strengthening friction model (below steady state).
+
+Args:
+    optimized_par (list): Model parameters [Ts, Vs, K, T01, S1, Tau1, V01, A_B1, T02, S2].
+    OBS_Time (array_like): Observation time values.
+    no_phases (int): Number of deformation phases (not used).
+
+Returns:
+    array_like: Synthetic slip over time.
+"""
+
     Ts = optimized_par[0]
     Vs = optimized_par[1]
     K = optimized_par[2]
@@ -252,6 +398,24 @@ def VSF_bSS_dromedary_plot(optimized_par,OBS_Time,no_phases):
 ###################################################################################################
 
 def VSF_aSS_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phases,columns,j,CREEPMETER,file1):
+    """
+Compute misfit for velocity-strengthening friction model (above steady state).
+
+Args:
+    optimized_par (list): Model parameters [Ts, Vs, K, T01, S1, Ta1, V01, t1, T02, S2].
+    OBS_Time (array_like): Observation time values.
+    OBS_Data (array_like): Observed slip values.
+    cov_matrix_inverse (ndarray): Inverse of data covariance matrix.
+    no_phases (int): Number of deformation phases (not used).
+    columns (int): Number of model columns (not used).
+    j (int): Model iteration index (not used).
+    CREEPMETER (str): Creepmeter name (not used).
+    file1 (file object): File handle to write misfit ratio.
+
+Returns:
+    float: Normalised misfit between model and data.
+"""
+
     Ts = optimized_par[0]
     Vs = optimized_par[1]
     K = optimized_par[2]
@@ -296,6 +460,18 @@ def VSF_aSS_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phas
 
 
 def VSF_aSS_dromedary_plot(optimized_par,OBS_Time,no_phases):
+    """
+Generate synthetic slip for velocity-strengthening friction model (above steady state).
+
+Args:
+    optimized_par (list): Model parameters [Ts, Vs, K, T01, S1, Ta1, V01, t1, T02, S2].
+    OBS_Time (array_like): Observation time values.
+    no_phases (int): Number of deformation phases (not used).
+
+Returns:
+    array_like: Synthetic slip over time.
+"""
+
     Ts = optimized_par[0]
     Vs = optimized_par[1]
     K = optimized_par[2]
@@ -323,6 +499,24 @@ def VSF_aSS_dromedary_plot(optimized_par,OBS_Time,no_phases):
 
 ###################################################################################################
 def PLV_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phases,columns,j,CREEPMETER,file1):
+    """
+    Compute model-data misfit for PLV dromedary model.
+
+    Args:
+        optimized_par (list): List of 10 model parameters.
+        OBS_Time (array_like): Observation time values.
+        OBS_Data (array_like): Observed slip data.
+        cov_matrix_inverse (ndarray): Inverse of the data covariance matrix.
+        no_phases (int): Number of deformation phases (not used).
+        columns (int): Number of model columns (not used).
+        j (int): Model iteration index (not used).
+        CREEPMETER (str): Name of the creepmeter (not used).
+        file1 (file object): Open file handle used to write the misfit ratio.
+
+    Returns:
+        float: Normalised misfit between model and data.
+    """
+
     Ts =   optimized_par[0]
     Vs =   optimized_par[1]
     K =    optimized_par[2]
@@ -356,6 +550,17 @@ def PLV_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phases,c
 
 
 def PLV_dromedary_plot(optimized_par,OBS_Time,no_phases):
+    """
+    Generate synthetic slip curve for PLV dromedary model.
+
+    Args:
+        optimized_par (list): List of 10 model parameters.
+        OBS_Time (array_like): Observation time values.
+        no_phases (int): Number of deformation phases (not used).
+
+    Returns:
+        array_like: Synthetic slip over OBS_Time based on model parameters.
+    """
     Ts =   optimized_par[0]
     Vs =   optimized_par[1]
     K =    optimized_par[2]
@@ -381,10 +586,20 @@ def PLV_dromedary_plot(optimized_par,OBS_Time,no_phases):
 ###################################################################################################
 
 def import_text(creepmeter):
-    ''' import text file for creepmeter data
-    input creepmter: creepmeter name
-    return tm/tm2: time for data
-    return min10creep/min10_creep2: slip for data'''
+    """
+    Import creepmeter data from text files.
+
+    Args:
+        creepmeter (str): Name of the creepmeter.
+
+    Returns:
+        tuple: Four arrays -
+            tm (np.ndarray): Timestamps for first data set.
+            min10_creep (np.ndarray): Slip values for first data set.
+            tm2 (np.ndarray or tuple): Timestamps for second data set (if any).
+            min10_creep2 (np.ndarray or tuple): Slip values for second data set (if any).
+    """
+
     if creepmeter == 'XSJ' or creepmeter == 'XHR' or creepmeter == 'XPK':
         vls = np.loadtxt("../../DATA_10MIN/RAW/San_Andreas/Tidy_name/{K}_A_10min.txt".format(K=creepmeter), dtype = str)
         Year  = vls[:,0].astype(int)
@@ -422,11 +637,20 @@ def import_text(creepmeter):
 
 
 def interpolate(tm,min10_creep,creepmeter):
-    '''interpolate the time series data to 10 minute frequency
-        input               tm: time
-        input      min10_creep: slip
-        return          tm_int: interpolated time
-        return min10_creep_int: interpolated slip'''
+    """
+Interpolate the time series data to 10-minute frequency.
+
+Args:
+    tm (array-like): Original time series timestamps.
+    min10_creep (array-like): Original slip values.
+    creepmeter (str): Name or identifier of the creepmeter (not used in function).
+
+Returns:
+    tuple:
+        tm_int (np.ndarray): Interpolated timestamps at 10-minute intervals.
+        min10_creep_int (np.ndarray): Interpolated slip values at 10-minute intervals.
+"""
+
     
     Time = pd.Series(pd.to_datetime(tm)) #convert to pandas series
     creeping = pd.DataFrame({'Time':Time, 'Tm': Time,'Creep':min10_creep.astype(float)}) #create a pandas dataframe
@@ -442,11 +666,20 @@ def interpolate(tm,min10_creep,creepmeter):
     return tm_int, min10_creep_int
 
 def interpolate_1min(tm,min10_creep,creepmeter):
-    '''interpolate the time series data to 10 minute frequency
-        input               tm: time
-        input      min10_creep: slip
-        return          tm_int: interpolated time
-        return min10_creep_int: interpolated slip'''
+    """
+Interpolate the time series data to 1-minute frequency.
+
+Args:
+    tm (array-like): Original time series timestamps.
+    min10_creep (array-like): Original slip values.
+    creepmeter (str): Name or identifier of the creepmeter (not used in function).
+
+Returns:
+    tuple:
+        tm_int (np.ndarray): Interpolated timestamps at 1-minute intervals.
+        min10_creep_int (np.ndarray): Interpolated slip values at 1-minute intervals.
+"""
+
     
     Time = pd.Series(pd.to_datetime(tm)) #convert to pandas series
     creeping = pd.DataFrame({'Time':Time, 'Tm': Time,'Creep':min10_creep.astype(np.float)}) #create a pandas dataframe
@@ -465,10 +698,19 @@ def interpolate_1min(tm,min10_creep,creepmeter):
 
 
 def creepmeter_events(creepmeter):
-    '''import creep catalogue for creep event
-    input creepmeter: name of creepmeter
-    return df_PICKS: dataframe of creep events
-    return duration: numpy array of duration of each event'''
+    """
+    Import creep catalogue data for a given creepmeter and compute event durations.
+
+    Args:
+        creepmeter (str): Name of the creepmeter to load data for.
+
+    Returns:
+        tuple:
+            df_PICKS (pd.DataFrame): DataFrame containing creep event catalog data.
+            duration (np.ndarray): Array of event durations in hours.
+            START_1 (pd.Series): Series of event start times as datetime objects.
+    """
+
     df_PICKS = pd.read_csv('../../CREEP_CATALOGUE/Creep event catalog at {k}.csv'.format(k=creepmeter),index_col=0)
     df_PICKS['og_index'] = df_PICKS.index #get creep event number not in index column
     EVENTS = df_PICKS.og_index
@@ -485,11 +727,18 @@ def creepmeter_events(creepmeter):
 
 
 def vel_acc(Time,slip,dx):
-    '''determine the velocity and acceleraton of the timeseries
-    input Time: time
-    input slip: slip
-    input   dx: time difference
-    return data: dataframe containing time, slip, velocity and acceleration'''
+    """
+Calculate velocity and acceleration from a time series of slip data.
+
+Args:
+    Time (array-like): Time values as datetime-like objects.
+    slip (array-like): Slip measurements corresponding to Time.
+    dx (float): Time difference interval for gradient calculation.
+
+Returns:
+    pd.DataFrame: DataFrame containing columns 'Time', 'Creep' (slip), 'vel' (velocity), and 'acc' (acceleration).
+"""
+
     Time_new = pd.Series(Time).dt.round("10min") #round times to nearest 10 minutes
     V = np.gradient(slip,dx)
     A = np.gradient(V,dx) # calculate the acceleration
@@ -497,11 +746,18 @@ def vel_acc(Time,slip,dx):
     return data
 
 def vel_acc_1min(Time,slip,dx):
-    '''determine the velocity and acceleraton of the timeseries
-    input Time: time
-    input slip: slip
-    input   dx: time difference
-    return data: dataframe containing time, slip, velocity and acceleration'''
+    """
+Calculate velocity and acceleration from a time series of slip data.
+
+Args:
+    Time (array-like): Time values as datetime-like objects.
+    slip (array-like): Slip measurements corresponding to Time.
+    dx (float): Time difference interval for gradient calculation.
+
+Returns:
+    pd.DataFrame: DataFrame containing columns 'Time', 'Creep' (slip), 'vel' (velocity), and 'acc' (acceleration).
+"""
+
     Time_new = pd.Series(Time).dt.round("1min") #round times to nearest 10 minutes
     V = np.gradient(slip,dx)
     A = np.gradient(V,dx) # calculate the acceleration
@@ -509,10 +765,17 @@ def vel_acc_1min(Time,slip,dx):
     return data
 
 def parkfield_remover(dataframe,creepmeter):
-    ''' remove the period of time around the 2004 Parkfield earthquake
-    input   dataframe: dataframe containing time, slip, velocity and acceleration
-    input  creepmeter: creepmeter invesigating
-    return dataframe2: return dataframe with time of Parkfield earthqauke removed. '''
+
+    """
+    Remove the period of time around the 2004 Parkfield earthquake from a dataframe.
+
+    Args:
+        dataframe (pd.DataFrame): DataFrame containing time, slip, velocity, and acceleration.
+        creepmeter (str): Name of the creepmeter under investigation.
+
+    Returns:
+        pd.DataFrame: DataFrame with the time period of the Parkfield earthquake removed (flagged).
+    """
     if creepmeter == 'XMM' or creepmeter == 'XMD' or creepmeter == 'XVA' or creepmeter == 'XPK' or creepmeter == 'XTA' or creepmeter == 'WKR' or creepmeter == 'CRR' or creepmeter == 'XGH':
         idx = np.logical_or(pd.to_datetime(dataframe.Start_Time)<=dt.datetime(2004,9,28,0,0,0),pd.to_datetime(dataframe.Start_Time)>=dt.datetime(2009,9,28,0,0,0))
         Zeros = prop_pos(dataframe,idx)
@@ -525,9 +788,15 @@ def parkfield_remover(dataframe,creepmeter):
     return dataframe2
 
 def lat_lon(creepmeter):
-    '''provide location of creepmeter
-    input creepmeter: creepmeter name
-    return latlon: lat & lon of creepmeter'''
+    """
+    Provide the latitude and longitude of a given creepmeter.
+
+    Args:
+        creepmeter (str): Creepmeter name.
+
+    Returns:
+        dict: Dictionary with keys 'name', 'lat', and 'lon' giving location info.
+    """
     XSJ_latlon = {'name': 'XSJ', 'lat': 36.837, 'lon': -121.52}
     XHR_latlon = {'name': 'XHR', 'lat': 36.772 , 'lon': -121.422}
     CWN_latlon = {'name': 'CWN', 'lat': 36.750 , 'lon': -121.385}
@@ -553,20 +822,23 @@ def lat_lon(creepmeter):
 
 def rain_time_series(fname,starttime,endtime,location):
     """
-    read ECMWF pressure data and output timeseries
-    :param        fname: netCDF file
-    :param    starttime: start time of data
-    :param      endtime: end time of data
-    :param     location: location of strainmeter
-    :return     dt_time: time of data
-    :return    pressure: pressure data    
-    """ 
+    Read ECMWF pressure data from a netCDF file and output a rainfall time series.
+
+    Args:
+        fname (str): Path to the netCDF file.
+        starttime (str or datetime): Start time of the data.
+        endtime (str or datetime): End time of the data.
+        location (dict): Dictionary with keys 'lat' and 'lon' for the location.
+
+    Returns:
+        tuple: (dt_time, rainfall) where
+            dt_time (np.ndarray): Array of datetime objects for the data times.
+            rainfall (np.ndarray): Rainfall data extracted from the file.
+    """
     import netCDF4 as nc
     #import file
     ds = nc.Dataset(fname)
     
-    #for var in ds.variables.values():
-    #    print(var)
     
     #extract variables
     lats = ds.variables['latitude'][:]
@@ -590,13 +862,20 @@ def rain_time_series(fname,starttime,endtime,location):
 
 
 def combine_rain(fname1,fname2,fname3,fname4,starttime,endtime,latlon):
-    '''combine multiple rainfall records together
-    input fname1-4: names of rainfall files
-    input starttime: start time of rainfall records
-    input endtime: end time of rainfall records
-    input latlon: lat & lon of creepmeter
-    return dt_time: time of rainfall record
-    return rainfall: rainfall recordings'''
+    """
+    Combine multiple rainfall records into a single time series.
+
+    Args:
+        fname1, fname2, fname3, fname4 (str): Paths to rainfall netCDF files.
+        starttime (str or datetime): Start time of the rainfall records.
+        endtime (str or datetime): End time of the rainfall records.
+        latlon (dict): Dictionary with keys 'lat' and 'lon' for the location.
+
+    Returns:
+        tuple: (dt_time, rainfall) where
+            dt_time (np.ndarray): Array of datetime objects spanning all files.
+            rainfall (np.ndarray): Combined rainfall data in millimeters.
+    """
     dt_time1, rainfall1  = rain_time_series(fname1,starttime,endtime,latlon)
     dt_time2, rainfall2  = rain_time_series(fname2,starttime,endtime,latlon)
     dt_time3, rainfall3  = rain_time_series(fname3,starttime,endtime,latlon)
@@ -611,6 +890,15 @@ def combine_rain(fname1,fname2,fname3,fname4,starttime,endtime,latlon):
     return dt_time , rainfall
 
 def rain_timeseries(creepmeter):
+    """
+    Load and combine rainfall time series data for a given creepmeter location.
+
+    Args:
+        creepmeter (str): Creepmeter name.
+
+    Returns:
+        pd.DataFrame: DataFrame with columns 'Time', 'Tm' (time index), and 'PRCP_creepmeter' (rainfall).
+    """
     fname1 = '../../Rainfall/ECMWF/ECMWF_Rainfall_SAF_1985-1989.nc'
     fname2 = '../../Rainfall/ECMWF/ECMWF_Rainfall_SAF_1990-1999.nc'
     fname3 = '../../Rainfall/ECMWF/ECMWF_Rainfall_SAF_2000-2009.nc'
@@ -628,10 +916,17 @@ def rain_timeseries(creepmeter):
 
 
 def rain_finder_general(dataframe_creep, dataframe_rain,time_window):
-    '''input dataframe_creep: dataframe of creep events
-       input dataframe_rain: dataframe of rain
-       input time_window: time for classification as a rain related event in days
-       return unique_CM2: dataframe of events not associated with rain'''
+    """
+    Identify creep events that are not associated with rainfall within a specified time window.
+
+    Args:
+        dataframe_creep (pd.DataFrame): DataFrame of creep events with Start_Time.
+        dataframe_rain (pd.DataFrame): DataFrame of rainfall data with 'Time' and 'PRCP_creepmeter'.
+        time_window (float): Time window in days to check for preceding rain.
+
+    Returns:
+        np.ndarray: Array of unique indices of creep events not associated with rainfall.
+    """
     Rain_CM2 = ()
     #dataframe_rain_dropped = dataframe_rain.copy(deep=True)
     dataframe_rain.drop(dataframe_rain[(dataframe_rain['PRCP_creepmeter'] <= 0.1)].index, inplace=True) #can add a threshold here as having it trip with 10^-14 mm of rain seems wrong
@@ -650,6 +945,16 @@ def rain_finder_general(dataframe_creep, dataframe_rain,time_window):
 
 
 def prop_pos(dataframe,list_prop):
+    """
+    Create a binary indicator array marking positions from a list within a DataFrame's length.
+
+    Args:
+        dataframe (pd.DataFrame): DataFrame to create indicator array for.
+        list_prop (list or array-like): List of indices to mark with 1.
+
+    Returns:
+        np.ndarray: Array of zeros and ones where ones mark positions in list_prop.
+    """
     Zeros = np.zeros(len(dataframe))
 
     for i in range(len(dataframe)):
@@ -660,6 +965,16 @@ def prop_pos(dataframe,list_prop):
     return Zeros
 
 def when_does_it_rain(event_dataframe,creempeter):
+    """
+    Add a binary column to event_dataframe indicating possible rain-related creep events.
+
+    Args:
+        event_dataframe (pd.DataFrame): DataFrame of creep events.
+        creepmeter (str): Creepmeter name.
+
+    Returns:
+        pd.DataFrame: Copy of event_dataframe with added 'rain_poss' column.
+    """
     df_rain_day_total = rain_timeseries(creempeter)
     rain_drop = rain_finder_general(event_dataframe, df_rain_day_total,1)
     Zeros = prop_pos(event_dataframe,rain_drop)
@@ -669,6 +984,20 @@ def when_does_it_rain(event_dataframe,creempeter):
 
 
 def creep_event_dataframe(dataframe,duration, start, creep_data,creepmeter):
+    """
+    Extract time, slip, velocity, and acceleration data for each creep event from full creep timeseries.
+
+    Args:
+        dataframe (pd.DataFrame): DataFrame of creep events with 'og_index' and start times.
+        duration (array-like): Duration of each event in hours.
+        start (pd.Series): Start times for each creep event.
+        creep_data (pd.DataFrame): Continuous creep timeseries with columns 'Time', 'Creep', 'vel', 'acc'.
+        creepmeter (str): Name of the creepmeter.
+
+    Returns:
+        dict: Dictionary mapping creep event index to a DataFrame of that event's data (Time, Slip, Velocity, Acceleration).
+        np.ndarray: Array of creep event indices.
+    """
     dataframes={}
     creep_index = np.array(dataframe.og_index)
     for j in range(len(dataframe)):
@@ -691,6 +1020,17 @@ def creep_event_dataframe(dataframe,duration, start, creep_data,creepmeter):
     return dataframes, creep_index       
 
 def creep_event_dataframe_short(dataframe,df_auto):
+    """
+    Create shortened creep event dataframes by excluding data points where slip exceeds 90% of max slip.
+
+    Args:
+        dataframe (dict): Dictionary of creep event DataFrames.
+        df_auto (pd.DataFrame): DataFrame with 'og_index' for creep events.
+
+    Returns:
+        dict: Dictionary of shortened creep event DataFrames.
+        np.ndarray: Array of creep event indices.
+    """
     dataframes={}
     creep_index = np.array(df_auto.og_index)
     for j in range(len(dataframe)):
@@ -706,72 +1046,91 @@ def creep_event_dataframe_short(dataframe,df_auto):
 ###################################################################################################
 
 def phase_splitter(Creep_Phase_no,dataframes):
-        if len(Creep_Phase_no) == 4:
-            P0 = np.logical_and(Creep_Phase_no.Ts <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T01)
-            P1 = (Creep_Phase_no.T01<= dataframes.Time)
-            data_P0 = dataframes[P0]
-            data_P1 = dataframes[P1]
-            data_P1.reset_index(inplace=True)
-            data_P2 = pd.DataFrame([[999999,data_P1.Slip.iloc[-1],0,0]],columns= ('Time','Slip','Velocity','Acceleration'))
-            data_P3 = pd.DataFrame([[999999,data_P1.Slip.iloc[-1],0,0]],columns= ('Time','Slip','Velocity','Acceleration'))
-            data_P4 = pd.DataFrame([[999999,data_P1.Slip.iloc[-1],0,0]],columns= ('Time','Slip','Velocity','Acceleration'))
-            Creep_Phase_no['T02'] = data_P1.Time.iloc[-1]
-            Creep_Phase_no['D02'] = data_P1.Slip.iloc[-1]
-            Creep_Phase_no['T03'] = data_P1.Time.iloc[-1]
-            Creep_Phase_no['D03'] = data_P1.Slip.iloc[-1]
-            Creep_Phase_no['T04'] = data_P1.Time.iloc[-1]
-            Creep_Phase_no['D04'] = data_P1.Slip.iloc[-1]
-        elif len(Creep_Phase_no) == 6:
-            P0 = np.logical_and(Creep_Phase_no.Ts <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T01)
-            P1 = np.logical_and(Creep_Phase_no.T01 <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T02)
-            P2 = (Creep_Phase_no.T02<= dataframes.Time)
-            data_P0 = dataframes[P0]
-            data_P1 = dataframes[P1]
-            data_P1.reset_index(inplace=True)
-            data_P2 = dataframes[P2]
-            #print(data_P1)
-            #print(data_P2)
-            data_P2.reset_index(inplace=True)
-            data_P3 = pd.DataFrame([[999999,data_P2.Slip.iloc[-1],0,0]],columns= ('Time','Slip','Velocity','Acceleration'))
-            data_P4 = pd.DataFrame([[999999,data_P2.Slip.iloc[-1],0,0]],columns= ('Time','Slip','Velocity','Acceleration'))
-            Creep_Phase_no['T03'] = data_P2.Time.iloc[-1]
-            Creep_Phase_no['D03'] = data_P2.Slip.iloc[-1]
-            Creep_Phase_no['T04'] = data_P2.Time.iloc[-1]
-            Creep_Phase_no['D04'] = data_P2.Slip.iloc[-1]
-        elif len(Creep_Phase_no) == 8:
-            P0 = np.logical_and(Creep_Phase_no.Ts <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T01)
-            P1 = np.logical_and(Creep_Phase_no.T01 <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T02)
-            P2 = np.logical_and(Creep_Phase_no.T02 <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T03)
-            P3 = (Creep_Phase_no.T03<= dataframes.Time)
-            data_P0 = dataframes[P0]
-            data_P1 = dataframes[P1]
-            data_P1.reset_index(inplace=True)
-            data_P2 = dataframes[P2]
-            data_P2.reset_index(inplace=True)
-            data_P3 = dataframes[P3]
-            data_P3.reset_index(inplace=True)
-            data_P4 = pd.DataFrame([[999999,data_P3.Slip.iloc[-1],0,0]],columns= ('Time','Slip','Velocity','Acceleration'))
-            Creep_Phase_no['T04'] = data_P3.Time.iloc[-1]
-            Creep_Phase_no['D04'] = data_P3.Slip.iloc[-1]
-        elif len(Creep_Phase_no) == 10:
-            P0 = np.logical_and(Creep_Phase_no.Ts <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T01)
-            P1 = np.logical_and(Creep_Phase_no.T01 <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T02)
-            P2 = np.logical_and(Creep_Phase_no.T02 <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T03)
-            P3 = np.logical_and(Creep_Phase_no.T03 <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T04)
-            P4 = (Creep_Phase_no.T04<= dataframes.Time)
-            data_P0 = dataframes[P0]
-            data_P1 = dataframes[P1]
-            data_P1.reset_index(inplace=True)
-            data_P2 = dataframes[P2]
-            data_P2.reset_index(inplace=True)
-            data_P3 = dataframes[P3]
-            data_P3.reset_index(inplace=True)
-            data_P4 = dataframes[P4]
-            data_P4.reset_index(inplace=True)
-        
-        return data_P0, data_P1, data_P2, data_P3, data_P4, Creep_Phase_no
+    """
+    Split creep event data into phases according to specified time boundaries.
+
+    Args:
+        Creep_Phase_no (pd.DataFrame): DataFrame with phase boundary times (e.g., Ts, T01, T02, ...).
+        dataframes (pd.DataFrame): DataFrame containing creep event time series data.
+
+    Returns:
+        tuple: DataFrames corresponding to phases P0, P1, P2, P3, P4 and updated Creep_Phase_no with phase end info.
+    """
+    if len(Creep_Phase_no) == 4:
+        P0 = np.logical_and(Creep_Phase_no.Ts <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T01)
+        P1 = (Creep_Phase_no.T01<= dataframes.Time)
+        data_P0 = dataframes[P0]
+        data_P1 = dataframes[P1]
+        data_P1.reset_index(inplace=True)
+        data_P2 = pd.DataFrame([[999999,data_P1.Slip.iloc[-1],0,0]],columns= ('Time','Slip','Velocity','Acceleration'))
+        data_P3 = pd.DataFrame([[999999,data_P1.Slip.iloc[-1],0,0]],columns= ('Time','Slip','Velocity','Acceleration'))
+        data_P4 = pd.DataFrame([[999999,data_P1.Slip.iloc[-1],0,0]],columns= ('Time','Slip','Velocity','Acceleration'))
+        Creep_Phase_no['T02'] = data_P1.Time.iloc[-1]
+        Creep_Phase_no['D02'] = data_P1.Slip.iloc[-1]
+        Creep_Phase_no['T03'] = data_P1.Time.iloc[-1]
+        Creep_Phase_no['D03'] = data_P1.Slip.iloc[-1]
+        Creep_Phase_no['T04'] = data_P1.Time.iloc[-1]
+        Creep_Phase_no['D04'] = data_P1.Slip.iloc[-1]
+    elif len(Creep_Phase_no) == 6:
+        P0 = np.logical_and(Creep_Phase_no.Ts <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T01)
+        P1 = np.logical_and(Creep_Phase_no.T01 <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T02)
+        P2 = (Creep_Phase_no.T02<= dataframes.Time)
+        data_P0 = dataframes[P0]
+        data_P1 = dataframes[P1]
+        data_P1.reset_index(inplace=True)
+        data_P2 = dataframes[P2]
+        data_P2.reset_index(inplace=True)
+        data_P3 = pd.DataFrame([[999999,data_P2.Slip.iloc[-1],0,0]],columns= ('Time','Slip','Velocity','Acceleration'))
+        data_P4 = pd.DataFrame([[999999,data_P2.Slip.iloc[-1],0,0]],columns= ('Time','Slip','Velocity','Acceleration'))
+        Creep_Phase_no['T03'] = data_P2.Time.iloc[-1]
+        Creep_Phase_no['D03'] = data_P2.Slip.iloc[-1]
+        Creep_Phase_no['T04'] = data_P2.Time.iloc[-1]
+        Creep_Phase_no['D04'] = data_P2.Slip.iloc[-1]
+    elif len(Creep_Phase_no) == 8:
+        P0 = np.logical_and(Creep_Phase_no.Ts <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T01)
+        P1 = np.logical_and(Creep_Phase_no.T01 <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T02)
+        P2 = np.logical_and(Creep_Phase_no.T02 <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T03)
+        P3 = (Creep_Phase_no.T03<= dataframes.Time)
+        data_P0 = dataframes[P0]
+        data_P1 = dataframes[P1]
+        data_P1.reset_index(inplace=True)
+        data_P2 = dataframes[P2]
+        data_P2.reset_index(inplace=True)
+        data_P3 = dataframes[P3]
+        data_P3.reset_index(inplace=True)
+        data_P4 = pd.DataFrame([[999999,data_P3.Slip.iloc[-1],0,0]],columns= ('Time','Slip','Velocity','Acceleration'))
+        Creep_Phase_no['T04'] = data_P3.Time.iloc[-1]
+        Creep_Phase_no['D04'] = data_P3.Slip.iloc[-1]
+    elif len(Creep_Phase_no) == 10:
+        P0 = np.logical_and(Creep_Phase_no.Ts <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T01)
+        P1 = np.logical_and(Creep_Phase_no.T01 <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T02)
+        P2 = np.logical_and(Creep_Phase_no.T02 <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T03)
+        P3 = np.logical_and(Creep_Phase_no.T03 <= np.array(dataframes.Time),  np.array(dataframes.Time) <  Creep_Phase_no.T04)
+        P4 = (Creep_Phase_no.T04<= dataframes.Time)
+        data_P0 = dataframes[P0]
+        data_P1 = dataframes[P1]
+        data_P1.reset_index(inplace=True)
+        data_P2 = dataframes[P2]
+        data_P2.reset_index(inplace=True)
+        data_P3 = dataframes[P3]
+        data_P3.reset_index(inplace=True)
+        data_P4 = dataframes[P4]
+        data_P4.reset_index(inplace=True)
+    
+    return data_P0, data_P1, data_P2, data_P3, data_P4, Creep_Phase_no
 
 def initial_and_bounds(creep_phase_new,data_P0,data_P1,data_P2,data_P3,data_P4,rheology):
+    """
+    Create initial parameter guesses and bounds for fitting different rheology models to creep phase data.
+
+    Args:
+        creep_phase_new (pd.Series): Series with phase boundary times and slip values.
+        data_P0, data_P1, data_P2, data_P3, data_P4 (pd.DataFrame): DataFrames of phase-specific creep data.
+        rheology (str): Rheology model name (e.g., 'LNV', 'PLV', 'VSF_SS', 'VSF_bSS', 'VSF_aSS').
+
+    Returns:
+        pd.DataFrame: DataFrame with initial guesses and bounds for model parameters.
+    """
     if rheology == 'LNV' or rheology == 'VSF_SS':
         initial_guess = [creep_phase_new.Ts,data_P0.iloc[0].Velocity,0,creep_phase_new.T01,creep_phase_new.D01,1,data_P1.iloc[0].Velocity,creep_phase_new.T02,creep_phase_new.D02,1,data_P2.iloc[0].Velocity,\
                         creep_phase_new.T03,creep_phase_new.D03,1,data_P3.iloc[0].Velocity,creep_phase_new.T04,creep_phase_new.D04,1,data_P4.iloc[0].Velocity]
@@ -846,6 +1205,15 @@ def initial_and_bounds(creep_phase_new,data_P0,data_P1,data_P2,data_P3,data_P4,r
     return params
 
 def check_dir(path):
+    """
+    Check if a directory exists, and create it if not.
+
+    Args:
+        path (str): Path to directory.
+
+    Returns:
+        None
+    """
     isExist = os.path.exists(path)
     if not isExist:
         # Create a new directory because it does not exist 
