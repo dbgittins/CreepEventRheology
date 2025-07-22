@@ -1,18 +1,9 @@
 import numpy as np
 import scipy
-import matplotlib.pyplot as plt 
 import datetime as dt
 import pandas as pd
-from scipy.optimize import minimize
 import scipy
-
-
-import Shape_fitter
-import creep_part_identify as cpi
-import seaborn as sns
-import matplotlib.colors as Colors
 from numba import jit
-from multiprocessing import Pool
 import os
 import pickle
 
@@ -52,7 +43,7 @@ def Velocity_strengthening_friction(optimized_par,OBS_Time):
     return Rheo_guess
 
 @jit(nopython=True,error_model = 'numpy')
-def Velocity_strengthening_friction_2(optimized_par,OBS_Time):
+def Velocity_strengthening_friction_bSS(optimized_par,OBS_Time):
     T0 = optimized_par[0]
     Tau = optimized_par[1]
     V_0 = optimized_par[2]
@@ -62,7 +53,7 @@ def Velocity_strengthening_friction_2(optimized_par,OBS_Time):
     return Rheo_guess
 
 @jit(nopython=True,error_model = 'numpy')
-def Velocity_strengthening_friction_3(optimized_par, OBS_Time):
+def Velocity_strengthening_friction_aSS(optimized_par, OBS_Time):
     T0 = optimized_par[0]
     ta = optimized_par[1]
     V_0 = optimized_par[2]
@@ -111,44 +102,6 @@ def LNV_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phases,c
     file1.write('{k} \n'.format(k=ratio))
     return ratio
 
-def LNV_bactrian(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phases,columns,j,CREEPMETER):
-    Ts = optimized_par[0]
-    Vs = optimized_par[1]
-    K = optimized_par[2]
-    T01 = optimized_par[3]
-    S1 = optimized_par[4]
-    Tau1 = optimized_par[5]
-    V01 = optimized_par[6]
-    T02 = optimized_par[7]
-    S2 = optimized_par[8]
-    Tau2 = optimized_par[9]
-    V02 = optimized_par[10]
-    T03 = optimized_par[11]
-    S3 = optimized_par[12]
-    
-    C_matrix_inv_selection = cov_matrix_inverse[0:len(OBS_Time),0:len(OBS_Time)]
-    
-    slip = np.zeros(len(OBS_Time))    
-    ii = np.logical_and(OBS_Time >= Ts, OBS_Time <= T01)
-    slip[ii] = Vs*OBS_Time[ii] + K
-    S1 = Vs*T01 + K
-    
-    jj = OBS_Time > T01
-    slip[jj] = Vs*T01 + Linear_viscous([T01,Tau1,V01],OBS_Time[jj])
-    S2 = Vs*T01 + Linear_viscous([T01,Tau1,V01],T02)
-    
-    kk  = OBS_Time > T02
-    slip[kk] = slip[kk] + Linear_viscous([T02,Tau2,V02],OBS_Time[kk])
-    S3 = S2 + Linear_viscous([T02,Tau2,V02],T03)
-    
-    BC = np.dot(C_matrix_inv_selection,np.array(OBS_Data - slip))
-    Error_co_VIS = np.dot(np.array(np.transpose(OBS_Data - slip)),BC)
-    
-    denominator = np.dot(C_matrix_inv_selection,np.array(OBS_Data))
-    ratio_denominator = np.dot(np.array(OBS_Data),denominator)
-    ratio = Error_co_VIS/ratio_denominator
-    
-    return ratio
 
 def LNV_dromedary_plot(optimized_par,OBS_Time,no_phases):
     Ts = optimized_par[0]
@@ -173,36 +126,6 @@ def LNV_dromedary_plot(optimized_par,OBS_Time,no_phases):
     
     return slip
 
-def LNV_bactrian_plot(optimized_par,OBS_Time,no_phases):
-    Ts = optimized_par[0]
-    Vs = optimized_par[1]
-    K = optimized_par[2]
-    T01 = optimized_par[3]
-    S1 = optimized_par[4]
-    Tau1 = optimized_par[5]
-    V01 = optimized_par[6]
-    T02 = optimized_par[7]
-    S2 = optimized_par[8]
-    Tau2 = optimized_par[9]
-    V02 = optimized_par[10]
-    T03 = optimized_par[11]
-    S3 = optimized_par[12]
-    
-    
-    slip = np.zeros(len(OBS_Time))    
-    ii = np.logical_and(OBS_Time >= Ts, OBS_Time <= T01)
-    slip[ii] = Vs*OBS_Time[ii] + K
-    S1 = Vs*T01 + K
-    
-    jj = OBS_Time > T01
-    slip[jj] = Vs*T01 + Linear_viscous([T01,Tau1,V01],OBS_Time[jj])
-    S2 = Vs*T01 + Linear_viscous([T01,Tau1,V01],T02)
-    
-    kk  = OBS_Time > T02
-    slip[kk] = slip[kk] + Linear_viscous([T02,Tau2,V02],OBS_Time[kk])
-    S3 = S2 + Linear_viscous([T02,Tau2,V02],T03)
-    
-    return slip
 ###################################################################################################
 def VSF_SS_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phases,columns,j,CREEPMETER,file1):
     Ts = optimized_par[0]
@@ -239,45 +162,6 @@ def VSF_SS_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phase
     file1.write('{k} \n'.format(k=ratio))
     return ratio
 
-def VSF_bactrian(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phases,columns,j,CREEPMETER):
-    Ts = optimized_par[0]
-    Vs = optimized_par[1]
-    K = optimized_par[2]
-    T01 = optimized_par[3]
-    S1 = optimized_par[4]
-    Tau1 = optimized_par[5]
-    V01 = optimized_par[6]
-    T02 = optimized_par[7]
-    S2 = optimized_par[8]
-    Tau2 = optimized_par[9]
-    V02 = optimized_par[10]
-    T03 = optimized_par[11]
-    S3 = optimized_par[12]
-    
-    C_matrix_inv_selection = cov_matrix_inverse[0:len(OBS_Time),0:len(OBS_Time)]
-    
-    slip = np.zeros(len(OBS_Time))    
-    ii = np.logical_and(OBS_Time >= Ts, OBS_Time <= T01)
-    slip[ii] = Vs*OBS_Time[ii] + K
-    S1 = Vs*T01 + K
-    
-    jj = OBS_Time > T01
-    slip[jj] = Vs*T01 + Velocity_strengthening_friction([T01,Tau1,V01],OBS_Time[jj])
-    S2 = Vs*T01 + Velocity_strengthening_friction([T01,Tau1,V01],T02)
-
-    kk  = OBS_Time > T02
-    slip[kk] = slip[kk] + Velocity_strengthening_friction([T02,Tau2,V02],OBS_Time[kk])
-    S3 = S2 + Velocity_strengthening_friction([T02,Tau2,V02],T03)
-    
-    
-    BC = np.dot(C_matrix_inv_selection,np.array(OBS_Data - slip))
-    Error_co_VIS = np.dot(np.array(np.transpose(OBS_Data - slip)),BC)
-    
-    denominator = np.dot(C_matrix_inv_selection,np.array(OBS_Data))
-    ratio_denominator = np.dot(np.array(OBS_Data),denominator)
-    ratio = Error_co_VIS/ratio_denominator
-    
-    return ratio
 
 def VSF_dromedary_plot(optimized_par,OBS_Time,no_phases):
     Ts = optimized_par[0]
@@ -302,36 +186,7 @@ def VSF_dromedary_plot(optimized_par,OBS_Time,no_phases):
     
     return slip
 
-def VSF_bactrian_plot(optimized_par,OBS_Time,no_phases):
-    Ts = optimized_par[0]
-    Vs = optimized_par[1]
-    K = optimized_par[2]
-    T01 = optimized_par[3]
-    S1 = optimized_par[4]
-    Tau1 = optimized_par[5]
-    V01 = optimized_par[6]
-    T02 = optimized_par[7]
-    S2 = optimized_par[8]
-    Tau2 = optimized_par[9]
-    V02 = optimized_par[10]
-    T03 = optimized_par[11]
-    S3 = optimized_par[12]
-    
-    
-    slip = np.zeros(len(OBS_Time))    
-    ii = np.logical_and(OBS_Time >= Ts, OBS_Time <= T01)
-    slip[ii] = Vs*OBS_Time[ii] + K
-    S1 = Vs*T01 + K
-    
-    jj = OBS_Time > T01
-    slip[jj] = Vs*T01 + Velocity_strengthening_friction([T01,Tau1,V01],OBS_Time[jj])
-    S2 = Vs*T01 + Velocity_strengthening_friction([T01,Tau1,V01],T02)
 
-    kk  = OBS_Time > T02
-    slip[kk] = slip[kk] + Velocity_strengthening_friction([T02,Tau2,V02],OBS_Time[kk])
-    S3 = S2 + Velocity_strengthening_friction([T02,Tau2,V02],T03)
-    
-    return slip
 ###################################################################################################
 
 def VSF_bSS_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phases,columns,j,CREEPMETER,file1):
@@ -355,8 +210,8 @@ def VSF_bSS_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phas
     S1 = Vs*T01 + K
     
     jj = OBS_Time > T01
-    slip[jj] = Vs*T01 + Velocity_strengthening_friction_2([T01,Tau1,V01,A_B1],OBS_Time[jj])
-    S2 = Vs*T01 + Velocity_strengthening_friction_2([T01,Tau1,V01,A_B1],T02)
+    slip[jj] = Vs*T01 + Velocity_strengthening_friction_bSS([T01,Tau1,V01,A_B1],OBS_Time[jj])
+    S2 = Vs*T01 + Velocity_strengthening_friction_bSS([T01,Tau1,V01,A_B1],T02)
 
     BC = np.dot(C_matrix_inv_selection,np.array(OBS_Data - slip))
     Error_co_VIS = np.dot(np.array(np.transpose(OBS_Data - slip)),BC)
@@ -389,8 +244,8 @@ def VSF_bSS_dromedary_plot(optimized_par,OBS_Time,no_phases):
     S1 = Vs*T01 + K
     
     jj = OBS_Time > T01
-    slip[jj] = Vs*T01 + Velocity_strengthening_friction_2([T01,Tau1,V01,A_B1],OBS_Time[jj])
-    S2 = Vs*T01 + Velocity_strengthening_friction_2([T01,Tau1,V01,A_B1],T02)
+    slip[jj] = Vs*T01 + Velocity_strengthening_friction_bSS([T01,Tau1,V01,A_B1],OBS_Time[jj])
+    S2 = Vs*T01 + Velocity_strengthening_friction_bSS([T01,Tau1,V01,A_B1],T02)
 
     return slip
 
@@ -416,8 +271,8 @@ def VSF_aSS_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phas
     S1 = Vs*T01 + K
     
     jj = OBS_Time > T01
-    slip[jj] = Vs*T01 + Velocity_strengthening_friction_3([T01,Ta1,V01,t1],OBS_Time[jj])
-    S2 = Vs*T01 + Velocity_strengthening_friction_3([T01,Ta1,V01,t1],T02)
+    slip[jj] = Vs*T01 + Velocity_strengthening_friction_aSS([T01,Ta1,V01,t1],OBS_Time[jj])
+    S2 = Vs*T01 + Velocity_strengthening_friction_aSS([T01,Ta1,V01,t1],T02)
     
     BC = np.dot(C_matrix_inv_selection,np.array(OBS_Data - slip))
     Error_co_VIS = np.dot(np.array(np.transpose(OBS_Data - slip)),BC)
@@ -439,46 +294,6 @@ def VSF_aSS_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phas
     file1.write('{k} \n'.format(k=ratio))
     return ratio
 
-def VSF3_bactrian(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phases,columns,j,CREEPMETER):
-    Ts = optimized_par[0]
-    Vs = optimized_par[1]
-    K = optimized_par[2]
-    T01 = optimized_par[3]
-    S1 = optimized_par[4]
-    Ta1 = optimized_par[5]
-    V01 = optimized_par[6]
-    t1 = optimized_par[7]
-    T02 = optimized_par[8]
-    S2 = optimized_par[9]
-    Ta2 = optimized_par[10]
-    V02 = optimized_par[11]
-    t2 = optimized_par[12]
-    T03 = optimized_par[13]
-    S3 = optimized_par[14]
-    
-    C_matrix_inv_selection = cov_matrix_inverse[0:len(OBS_Time),0:len(OBS_Time)]
-    
-    slip = np.zeros(len(OBS_Time))    
-    ii = np.logical_and(OBS_Time >= Ts, OBS_Time <= T01)
-    slip[ii] = Vs*OBS_Time[ii] + K
-    S1 = Vs*T01 + K
-    
-    jj = OBS_Time > T01
-    slip[jj] = Vs*T01 + Velocity_strengthening_friction_3([T01,Ta1,V01,t1],OBS_Time[jj])
-    S2 = Vs*T01 + Velocity_strengthening_friction_3([T01,Ta1,V01,t1],T02)
-
-    kk  = OBS_Time > T02
-    slip[kk] = slip[kk] + Velocity_strengthening_friction_3([T02,Ta2,V02,t2],OBS_Time[kk])
-    S3 = S2 + Velocity_strengthening_friction_3([T02,Ta2,V02,t2],T03)
-    
-    BC = np.dot(C_matrix_inv_selection,np.array(OBS_Data - slip))
-    Error_co_VIS = np.dot(np.array(np.transpose(OBS_Data - slip)),BC)
-    
-    denominator = np.dot(C_matrix_inv_selection,np.array(OBS_Data))
-    ratio_denominator = np.dot(np.array(OBS_Data),denominator)
-    ratio = Error_co_VIS/ratio_denominator
-    
-    return ratio
 
 def VSF_aSS_dromedary_plot(optimized_par,OBS_Time,no_phases):
     Ts = optimized_par[0]
@@ -499,184 +314,13 @@ def VSF_aSS_dromedary_plot(optimized_par,OBS_Time,no_phases):
     S1 = Vs*T01 + K
     
     jj = OBS_Time > T01
-    slip[jj] = Vs*T01 + Velocity_strengthening_friction_3([T01,Ta1,V01,t1],OBS_Time[jj])
-    S2 = Vs*T01 + Velocity_strengthening_friction_3([T01,Ta1,V01,t1],T02)
+    slip[jj] = Vs*T01 + Velocity_strengthening_friction_aSS([T01,Ta1,V01,t1],OBS_Time[jj])
+    S2 = Vs*T01 + Velocity_strengthening_friction_aSS([T01,Ta1,V01,t1],T02)
 
 
     return slip
 
-def VSF3_bactrian_plot(optimized_par,OBS_Time,no_phases):
-    Ts = optimized_par[0]
-    Vs = optimized_par[1]
-    K = optimized_par[2]
-    T01 = optimized_par[3]
-    S1 = optimized_par[4]
-    Ta1 = optimized_par[5]
-    V01 = optimized_par[6]
-    t1 = optimized_par[7]
-    T02 = optimized_par[8]
-    S2 = optimized_par[9]
-    Ta2 = optimized_par[10]
-    V02 = optimized_par[11]
-    t2 = optimized_par[12]
-    T03 = optimized_par[13]
-    S3 = optimized_par[14]
-    
-    
-    slip = np.zeros(len(OBS_Time))    
-    ii = np.logical_and(OBS_Time >= Ts, OBS_Time <= T01)
-    slip[ii] = Vs*OBS_Time[ii] + K
-    S1 = Vs*T01 + K
-    
-    jj = OBS_Time > T01
-    slip[jj] = Vs*T01 + Velocity_strengthening_friction_3([T01,Ta1,V01,t1],OBS_Time[jj])
-    S2 = Vs*T01 + Velocity_strengthening_friction_3([T01,Ta1,V01,t1],T02)
 
-    kk  = OBS_Time > T02
-    slip[kk] = slip[kk] + Velocity_strengthening_friction_3([T02,Ta2,V02,t2],OBS_Time[kk])
-    S3 = S2 + Velocity_strengthening_friction_3([T02,Ta2,V02,t2],T03)
-
-    return slip
-###################################################################################################
-def RDF_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phases,columns,j,CREEPMETER,file1):
-    Ts = optimized_par[0]
-    Vs = optimized_par[1]
-    K = optimized_par[2]
-    T01 = optimized_par[3]
-    S1 = optimized_par[4]
-    Ta1 = optimized_par[5]
-    V01 = optimized_par[6]
-    V_0L1 = optimized_par[7]
-    T02 = optimized_par[8]
-    S2 = optimized_par[9]
-
-    
-    C_matrix_inv_selection = cov_matrix_inverse[0:len(OBS_Time),0:len(OBS_Time)]
-    
-    slip = np.zeros(len(OBS_Time))    
-    ii = np.logical_and(OBS_Time >= Ts, OBS_Time <= T01)
-    slip[ii] = Vs*OBS_Time[ii] + K
-    S1 = Vs*T01 + K
-    
-    jj = OBS_Time > T01
-    slip[jj] = Vs*T01 + Rate_dependent_friction([T01,Ta1,V01,V_0L1],OBS_Time[jj])
-    S2 = Vs*T01 + Rate_dependent_friction([T01,Ta1,V01,V_0L1],T02)
-    
-    BC = np.dot(C_matrix_inv_selection,np.array(OBS_Data - slip))
-    Error_co_VIS = np.dot(np.array(np.transpose(OBS_Data - slip)),BC)
-    
-    denominator = np.dot(C_matrix_inv_selection,np.array(OBS_Data))
-    ratio_denominator = np.dot(np.array(OBS_Data),denominator)
-    ratio = Error_co_VIS/ratio_denominator
-    
-    diff = np.array(OBS_Data - slip)
-
-    numerator = np.matmul(diff.T,np.matmul(C_matrix_inv_selection,diff))
-    denominator = np.matmul(np.array(OBS_Data).T,np.matmul(C_matrix_inv_selection,np.array(OBS_Data)))
-
-    ratio = numerator/denominator
-    file1.write('{k} \n'.format(k=ratio))
-    return ratio
-
-def RDF_bactrian(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phases,columns,j,CREEPMETER):
-    Ts = optimized_par[0]
-    Vs = optimized_par[1]
-    K = optimized_par[2]
-    T01 = optimized_par[3]
-    S1 = optimized_par[4]
-    Ta1 = optimized_par[5]
-    V01 = optimized_par[6]
-    V_0L1 = optimized_par[7]
-    T02 = optimized_par[8]
-    S2 = optimized_par[9]
-    Ta2 = optimized_par[10]
-    V02 = optimized_par[11]
-    V_0L2 = optimized_par[12]
-    T03 = optimized_par[13]
-    S3 = optimized_par[14]
-
-    
-    C_matrix_inv_selection = cov_matrix_inverse[0:len(OBS_Time),0:len(OBS_Time)]
-    
-    slip = np.zeros(len(OBS_Time))    
-    ii = np.logical_and(OBS_Time >= Ts, OBS_Time <= T01)
-    slip[ii] = Vs*OBS_Time[ii] + K
-    S1 = Vs*T01 + K
-    
-    jj = OBS_Time > T01
-    slip[jj] = Vs*T01 + Rate_dependent_friction([T01,Ta1,V01,V_0L1],OBS_Time[jj])
-    S2 = Vs*T01 + Rate_dependent_friction([T01,Ta1,V01,V_0L1],T02)
-
-    kk  = OBS_Time > T02
-    slip[kk] = slip[kk] + Rate_dependent_friction([T02,Ta2,V02,V_0L2],OBS_Time[kk])
-    S3 = S2 + Rate_dependent_friction([T02,Ta2,V02,V_0L2],T03)
-    
-    BC = np.dot(C_matrix_inv_selection,np.array(OBS_Data - slip))
-    Error_co_VIS = np.dot(np.array(np.transpose(OBS_Data - slip)),BC)
-    
-    denominator = np.dot(C_matrix_inv_selection,np.array(OBS_Data))
-    ratio_denominator = np.dot(np.array(OBS_Data),denominator)
-    ratio = Error_co_VIS/ratio_denominator
-    
-    return ratio
-
-def RDF_dromedary_plot(optimized_par,OBS_Time,no_phases):
-    Ts = optimized_par[0]
-    Vs = optimized_par[1]
-    K = optimized_par[2]
-    T01 = optimized_par[3]
-    S1 = optimized_par[4]
-    Ta1 = optimized_par[5]
-    V01 = optimized_par[6]
-    V_0L1 = optimized_par[7]
-    T02 = optimized_par[8]
-    S2 = optimized_par[9]
-    
-    
-    slip = np.zeros(len(OBS_Time))    
-    ii = np.logical_and(OBS_Time >= Ts, OBS_Time <= T01)
-    slip[ii] = Vs*OBS_Time[ii] + K
-    S1 = Vs*T01 + K
-    
-    jj = OBS_Time > T01
-    slip[jj] = Vs*T01 + Rate_dependent_friction([T01,Ta1,V01,V_0L1],OBS_Time[jj])
-    S2 = Vs*T01 + Rate_dependent_friction([T01,Ta1,V01,V_0L1],T02)
-    
-    return slip
-
-def RDF_bactrian_plot(optimized_par,OBS_Time,no_phases):
-    Ts = optimized_par[0]
-    Vs = optimized_par[1]
-    K = optimized_par[2]
-    T01 = optimized_par[3]
-    S1 = optimized_par[4]
-    Ta1 = optimized_par[5]
-    V01 = optimized_par[6]
-    V_0L1 = optimized_par[7]
-    T02 = optimized_par[8]
-    S2 = optimized_par[9]
-    Ta2 = optimized_par[10]
-    V02 = optimized_par[11]
-    V_0L2 = optimized_par[12]
-    T03 = optimized_par[13]
-    S3 = optimized_par[14]
-
-    
-    
-    slip = np.zeros(len(OBS_Time))    
-    ii = np.logical_and(OBS_Time >= Ts, OBS_Time <= T01)
-    slip[ii] = Vs*OBS_Time[ii] + K
-    S1 = Vs*T01 + K
-    
-    jj = OBS_Time > T01
-    slip[jj] = Vs*T01 + Rate_dependent_friction([T01,Ta1,V01,V_0L1],OBS_Time[jj])
-    S2 = Vs*T01 + Rate_dependent_friction([T01,Ta1,V01,V_0L1],T02)
-
-    kk  = OBS_Time > T02
-    slip[kk] = slip[kk] + Rate_dependent_friction([T02,Ta2,V02,V_0L2],OBS_Time[kk])
-    S3 = S2 + Rate_dependent_friction([T02,Ta2,V02,V_0L2],T03)
-    
-    return slip
 ###################################################################################################
 def PLV_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phases,columns,j,CREEPMETER,file1):
     Ts =   optimized_par[0]
@@ -710,46 +354,6 @@ def PLV_dromedary(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phases,c
     file1.write('{k} \n'.format(k=ratio))    
     return ratio
 
-def PLV_bactrian(optimized_par,OBS_Time,OBS_Data,cov_matrix_inverse,no_phases,columns,j,CREEPMETER):
-    Ts =   optimized_par[0]
-    Vs =   optimized_par[1]
-    K =    optimized_par[2]
-    T01 =  optimized_par[3]
-    S1 =   optimized_par[4]
-    Tau1 = optimized_par[5]
-    V01 =  optimized_par[6]
-    n1 =   optimized_par[7]
-    T02 =  optimized_par[8]
-    S2 =   optimized_par[9]
-    Tau2 = optimized_par[10]
-    V02 =  optimized_par[11]
-    n2 =   optimized_par[12]   
-    T03 =  optimized_par[13]
-    S3 =   optimized_par[14]
-    
-    C_matrix_inv_selection = cov_matrix_inverse[0:len(OBS_Time),0:len(OBS_Time)]
-    slip = np.zeros(len(OBS_Time))    
-    ii = np.logical_and(OBS_Time >= Ts, OBS_Time <= T01)
-    slip[ii] = Vs*OBS_Time[ii] + K
-    S1 = Vs*T01 + K
-    
-    jj = OBS_Time > T01
-    slip[jj] = Vs*T01 + Power_law_viscous([T01,Tau1,V01,n1],OBS_Time[jj])
-    S2 = Vs*T01 + Power_law_viscous([T01,Tau1,V01,n1],T02)
-
-    kk  = OBS_Time > T02
-    slip[kk] = slip[kk] + Power_law_viscous([T02,Tau2,V02,n2],OBS_Time[kk])
-    S3 = S2 + Power_law_viscous([T02,Tau2,V02,n2],T03)
-    
-    
-    BC = np.dot(C_matrix_inv_selection,np.array(OBS_Data - slip))
-    Error_co_VIS = np.dot(np.array(np.transpose(OBS_Data - slip)),BC)
-    
-    denominator = np.dot(C_matrix_inv_selection,np.array(OBS_Data))
-    ratio_denominator = np.dot(np.array(OBS_Data),denominator)
-    ratio = Error_co_VIS/ratio_denominator
-    
-    return ratio
 
 def PLV_dromedary_plot(optimized_par,OBS_Time,no_phases):
     Ts =   optimized_par[0]
@@ -773,36 +377,6 @@ def PLV_dromedary_plot(optimized_par,OBS_Time,no_phases):
     S2 = Vs*T01 + Power_law_viscous([T01,Tau1,V01,n1],T02)
     return slip
 
-def PLV_bactrian_plot(optimized_par,OBS_Time,no_phases):
-    Ts =   optimized_par[0]
-    Vs =   optimized_par[1]
-    K =    optimized_par[2]
-    T01 =  optimized_par[3]
-    S1 =   optimized_par[4]
-    Tau1 = optimized_par[5]
-    V01 =  optimized_par[6]
-    n1 =   optimized_par[7]
-    T02 =  optimized_par[8]
-    S2 =   optimized_par[9]
-    Tau2 = optimized_par[10]
-    V02 =  optimized_par[11]
-    n2 =   optimized_par[12]   
-    T03 =  optimized_par[13]
-    S3 =   optimized_par[14]
-    
-    slip = np.zeros(len(OBS_Time))    
-    ii = np.logical_and(OBS_Time >= Ts, OBS_Time <= T01)
-    slip[ii] = Vs*OBS_Time[ii] + K
-    S1 = Vs*T01 + K
-    
-    jj = OBS_Time > T01
-    slip[jj] = Vs*T01 + Power_law_viscous([T01,Tau1,V01,n1],OBS_Time[jj])
-    S2 = Vs*T01 + Power_law_viscous([T01,Tau1,V01,n1],T02)
-
-    kk  = OBS_Time > T02
-    slip[kk] = slip[kk] + Power_law_viscous([T02,Tau2,V02,n2],OBS_Time[kk])
-    S3 = S2 + Power_law_viscous([T02,Tau2,V02,n2],T03)
-    return slip
 
 ###################################################################################################
 
@@ -1257,21 +831,6 @@ def initial_and_bounds(creep_phase_new,data_P0,data_P1,data_P2,data_P3,data_P4,r
         
         params = pd.concat([params,bnds_params])
         
-    elif rheology == 'RDF':
-        initial_guess = [creep_phase_new.Ts,data_P0.iloc[0].Velocity,0,creep_phase_new.T01,creep_phase_new.D01,1,data_P1.iloc[0].Velocity,1,creep_phase_new.T02,creep_phase_new.D02,1,data_P2.iloc[0].Velocity,1,\
-                        creep_phase_new.T03,creep_phase_new.D03,1,data_P3.iloc[0].Velocity,1,creep_phase_new.T04,creep_phase_new.D04,1,data_P4.iloc[0].Velocity,1]
-        params = pd.DataFrame([initial_guess],columns = ('Ts','Vs','K','T01','S1','Ta1','V01','V0/VL1','T02','S2','Ta2','V02','V0/VL2','T03','S3','Ta3','V03','V0/VL3','T04','S4','Ta4','V04','V0/VL4'), index = ['initial'])
-        
-        bnds = ((creep_phase_new.Ts-0.5, creep_phase_new.Ts+0.5),(0,max(data_P0.Velocity)),(-10,10),\
-                (creep_phase_new.T01-0.5, creep_phase_new.T01+0.5),(creep_phase_new.D01-0.01,creep_phase_new.D01+0.01),(0,1000),(0,max(data_P1.Velocity)),(0,1000),\
-                (creep_phase_new.T02-0.5,creep_phase_new.T02+0.5),(creep_phase_new.D02-0.01,creep_phase_new.D02+0.01),(0,1000),(0,max(data_P2.Velocity)),(0,1000),\
-                (creep_phase_new.T03-0.5,creep_phase_new.T03+0.5),(creep_phase_new.D03-0.01,creep_phase_new.D03+0.01),(0,1000),(0,max(data_P3.Velocity)),(0,1000),\
-                (creep_phase_new.T04-0.5,creep_phase_new.T04+0.5),(creep_phase_new.D04-0.01,creep_phase_new.D04+0.01),(0,1000),(0,max(data_P4.Velocity)),(0,1000))
-        
-        bnds_params = pd.DataFrame([bnds],columns = ('Ts','Vs','K','T01','S1','Ta1','V01','V0/VL1','T02','S2','Ta2','V02','V0/VL2','T03','S3','Ta3','V03','V0/VL3','T04','S4','Ta4','V04','V0/VL4'), index = ['bounds'])
-        
-        params = pd.concat([params,bnds_params])
-        
     else:
         initial_guess = [creep_phase_new.Ts,data_P0.iloc[0].Velocity,0,creep_phase_new.T01,creep_phase_new.D01,data_P1.Slip.iloc[-1],1,1,creep_phase_new.T02,creep_phase_new.D02,data_P2.Slip.iloc[-1],1,1,\
                         creep_phase_new.T03,creep_phase_new.D03,data_P3.Slip.iloc[-1],1,1,creep_phase_new.T04,creep_phase_new.D04,data_P4.Slip.iloc[-1],1,1]
@@ -1290,242 +849,5 @@ def check_dir(path):
     isExist = os.path.exists(path)
     if not isExist:
         # Create a new directory because it does not exist 
-        os.makedirs(path, exist_ok=True)
-###################################################################################################
-def LNV_cf_dromedary(t,Ts,Vs,K,T01,S1,Tau1,V01,T02,S2):
-       
-    slip = np.zeros(len(t))    
-    ii = np.logical_and(t >= Ts, t <= T01)
-    slip[ii] = Vs*t[ii] + K
-    S1 = Vs*T01 + K
-    
-    jj = t > T01
-    slip[jj] = Vs*T01 + Linear_viscous([T01,Tau1,V01],t[jj])
-    S2 = Vs*T01 + Linear_viscous([T01,Tau1,V01],T02)
-    
-    return slip
+        os.makedirs(path, exist_ok=True)  
 
-def RDF_cf_dromedary(t,Ts,Vs,K,T01,S1,Ta1,V01,V_0L1,T02,S2):
-    
-    slip = np.zeros(len(t))    
-    ii = np.logical_and(t >= Ts, t <= T01)
-    slip[ii] = Vs*t[ii] + K
-    S1 = Vs*T01 + K
-    
-    jj = t > T01
-    slip[jj] = Vs*T01 + Rate_dependent_friction([T01,Ta1,V01,V_0L1],t[jj])
-    S2 = Vs*T01 + Rate_dependent_friction([T01,Ta1,V01,V_0L1],T02)
-    
-    return slip   
- ###################################################################################################
-def LNV_fitter(time,slip,cov_matrix_inv,no_phases,columns_LNV,j,CREEPMETER,LNV_DF_params,atest,file_misfit):
-    print('Linear Viscous: {k}'.format(k=j))
-    print ("Current date and time : ")
-    
-    print (dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    isExistLNV = os.path.exists('/home/earthquakes2/homes/Dan/Rheology/Single_rheology_27_APR_23/{k}/fits/{y}/LNV/{k}_{y}_LNV_fit_dictionary_multi_phase_27_APR_23.txt'.format(k=CREEPMETER,y=j))
-    if not isExistLNV:
-        success = False
-        n_iter = 5000
-        LNV_bounds = LNV_DF_params.loc['bounds'].to_list()
-        LNV_initial_guess = LNV_DF_params.loc['initial'].to_list()
-        while success == False:
-            if success == False:
-                res_LNV = scipy.optimize.basinhopping(LNV_dromedary, LNV_initial_guess,\
-                accept_test = atest, minimizer_kwargs = ({'args':(time,slip,cov_matrix_inv,no_phases,\
-                columns_LNV,j,CREEPMETER,file_misfit),'method':'SLSQP','bounds':LNV_bounds}))#,'options':{'maxiter':n_iter}}),niter=1000)            
-                n_iter = n_iter+2000
-                success = res_LNV.success
-                LNV_initial_guess = res_LNV.x
-        dictionary_LNV = {}
-        dictionary_LNV['fit'] = res_LNV
-        LNV_fitting_params = pd.DataFrame([res_LNV.x],columns = ('Ts','Vs','K','T01','S1','Tau1','V01','T02','S2'), index = ['fitted'])
-        LNV_DF_params = pd.concat([LNV_DF_params,LNV_fitting_params])
-        dictionary_LNV['fitting params'] = LNV_DF_params
-        #dictionary_LNV['params tried'] = LNV_params_tried
-        with open("/home/earthquakes2/homes/Dan/Rheology/Single_rheology_27_APR_23/{k}/fits/{u}/LNV/{k}_{u}_LNV_fit_dictionary_multi_phase_27_APR_23.txt".format(k=CREEPMETER,u=j), "wb") as tf:
-            pickle.dump(dictionary_LNV,tf)
-    else:
-        with open("/home/earthquakes2/homes/Dan/Rheology/Single_rheology_27_APR_23/{k}/fits/{u}/LNV/{k}_{u}_LNV_fit_dictionary_multi_phase_27_APR_23.txt".format(k=CREEPMETER,u=j), "rb") as tf:
-            dictionary_LNV = pickle.load(tf)
-            res_LNV = dictionary_LNV['fit']
-            LNV_DF_params = dictionary_LNV['fitting params']
-    return LNV_DF_params
-
-###################################################################################################
-def PLV_fitter(time,slip,cov_matrix_inv,no_phases,columns_PLV,j,CREEPMETER,PLV_DF_params,atest,file_misfit):
-    print('Power-law Viscous: {k}'.format(k=j))
-    print ("Current date and time : ")
-    print (dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    isExistPLV = os.path.exists('/home/earthquakes2/homes/Dan/Rheology/Single_rheology_27_APR_23/{k}/fits/{y}/PLV/{k}_{y}_PLV_fit_dictionary_multi_phase_27_APR_23.txt'.format(k=CREEPMETER,y=j))
-    if not isExistPLV:
-        #print('../../Rheology/Single_rheology_04_APR_23/{k}/fits/{y}/PLV/{k}_{y}_PLV_fit_dictionary_multi_phase_04_APR_23.txt'.format(k=CREEPMETER[q],y=j))
-        success = False
-        n_iter = 5000
-        PLV_bounds = PLV_DF_params.loc['bounds'].to_list()
-        PLV_initial_guess = PLV_DF_params.loc['initial'].to_list()
-        while success == False:
-            if success == False:
-                res_PLV = scipy.optimize.basinhopping(PLV_dromedary, PLV_initial_guess,\
-                accept_test= atest, minimizer_kwargs = ({'args':(time,slip,cov_matrix_inv,no_phases,\
-                columns_PLV,j,CREEPMETER,file_misfit),'method':'SLSQP','bounds':PLV_bounds}))#,'options':{'maxiter':n_iter}}),niter=1000)
-                n_iter = n_iter+2000
-                success = res_PLV.success
-                PLV_initial_guess = res_PLV.x
-
-        dictionary_PLV = {}
-        dictionary_PLV['fit'] = res_PLV
-        PLV_fitting_params = pd.DataFrame([res_PLV.x],columns = ('Ts','Vs','K','T01','S1','Tau1','V01','n1','T02','S2'), index = ['fitted'])
-        PLV_DF_params = pd.concat([PLV_DF_params,PLV_fitting_params])
-        dictionary_PLV['fitting params'] = PLV_DF_params
-        #dictionary_PLV['params tried'] = PLV_params_tried
-        with open("/home/earthquakes2/homes/Dan/Rheology/Single_rheology_27_APR_23/{k}/fits/{u}/PLV/{k}_{u}_PLV_fit_dictionary_multi_phase_27_APR_23.txt".format(k=CREEPMETER,u=j), "wb") as tf:
-            pickle.dump(dictionary_PLV,tf)
-    else:
-        with open("/home/earthquakes2/homes/Dan/Rheology/Single_rheology_27_APR_23/{k}/fits/{u}/PLV/{k}_{u}_PLV_fit_dictionary_multi_phase_27_APR_23.txt".format(k=CREEPMETER,u=j), "rb") as tf:
-            dictionary_PLV = pickle.load(tf)
-            res_PLV = dictionary_PLV['fit']
-            PLV_DF_params = dictionary_PLV['fitting params']
-    return PLV_DF_params
-###################################################################################################
-def VSF_SS_fitter(time,slip,cov_matrix_inv,no_phases,columns_VSF_SS,j,CREEPMETER,VSF_SS_DF_params,atest,file_misfit):
-    print('VSF-SS: {k}'.format(k=j))
-    print ("Current date and time : ")
-    print (dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    isExistVSF_SS = os.path.exists('/home/earthquakes2/homes/Dan/Rheology/Single_rheology_27_APR_23/{k}/fits/{y}/VSF_SS/{k}_{y}_VSF_SS_fit_dictionary_multi_phase_27_APR_23.txt'.format(k=CREEPMETER,y=j))
-    if not isExistVSF_SS:
-        #print('../../Rheology/Single_rheology_27_APR_23/{k}/fits/{y}/VSF_SS/{k}_{y}_VSF_SS_fit_dictionary_multi_phase_27_APR_23.txt'.format(k=CREEPMETER[q],y=j))
-        success = False
-        n_iter = 5000
-        VSF_SS_bounds = VSF_SS_DF_params.loc['bounds'].to_list()
-        VSF_SS_initial_guess = VSF_SS_DF_params.loc['initial'].to_list()
-        while success == False:
-            if success == False:
-                res_VSF_SS = scipy.optimize.basinhopping(VSF_SS_dromedary, VSF_SS_initial_guess,\
-                accept_test = atest, minimizer_kwargs = ({'args':(time,slip,cov_matrix_inv,no_phases,\
-                columns_VSF_SS,j,CREEPMETER,file_misfit),'method':'SLSQP','bounds':VSF_SS_bounds}))#,'options':{'maxiter':n_iter}}),niter=1000)
-                n_iter = n_iter+2000
-                success = res_VSF_SS.success
-                VSF_SS_initial_guess = res_VSF_SS.x
-
-        dictionary_VSF_SS = {}
-        dictionary_VSF_SS['fit'] = res_VSF_SS
-        VSF_SS_fitting_params = pd.DataFrame([res_VSF_SS.x],columns = ('Ts','Vs','K','T01','S1','Tau1','V01','T02','S2'), index = ['fitted'])
-        VSF_SS_DF_params = pd.concat([VSF_SS_DF_params,VSF_SS_fitting_params])
-        dictionary_VSF_SS['fitting params'] = VSF_SS_DF_params
-        #dictionary_VSF_SS['params tried'] = VSF_SS_params_tried
-        with open("/home/earthquakes2/homes/Dan/Rheology/Single_rheology_27_APR_23/{k}/fits/{u}/VSF_SS/{k}_{u}_VSF_SS_fit_dictionary_multi_phase_27_APR_23.txt".format(k=CREEPMETER,u=j), "wb") as tf:
-            pickle.dump(dictionary_VSF_SS,tf)
-    else:
-        with open("/home/earthquakes2/homes/Dan/Rheology/Single_rheology_27_APR_23/{k}/fits/{u}/VSF_SS/{k}_{u}_VSF_SS_fit_dictionary_multi_phase_27_APR_23.txt".format(k=CREEPMETER,u=j), "rb") as tf:
-            dictionary_VSF_SS = pickle.load(tf)
-            res_VSF_SS = dictionary_VSF_SS['fit']
-            VSF_SS_DF_params = dictionary_VSF_SS['fitting params']
-    return VSF_SS_DF_params
-###################################################################################################
-def RDF_fitter(time,slip,cov_matrix_inv,no_phases,columns_RDF,j,CREEPMETER,RDF_DF_params,atest,file_misfit):
-    print('RDF: {k}'.format(k=j))
-    print ("Current date and time : ")
-    print (dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    isExistRDF = os.path.exists('../../Rheology/Single_rheology_27_APR_23/{k}/fits/{y}/RDF/{k}_{y}_RDF_fit_dictionary_multi_phase_27_APR_23.txt'.format(k=CREEPMETER,y=j))
-    if not isExistRDF:
-        #print('../../Rheology/Single_rheology_27_APR_23/{k}/fits/{y}/RDF/{k}_{y}_RDF_fit_dictionary_multi_phase_27_APR_23.txt'.format(k=CREEPMETER[q],y=j))
-        success = False
-        n_iter = 5000
-        RDF_bounds = RDF_DF_params.loc['bounds'].to_list()
-        RDF_initial_guess = RDF_DF_params.loc['initial'].to_list()
-        while success == False:
-            if success == False:
-                res_RDF = scipy.optimize.basinhopping(RDF_dromedary, RDF_initial_guess,\
-                accept_test = atest, minimizer_kwargs = ({'args':(time,slip,cov_matrix_inv,no_phases,\
-                columns_RDF,j,CREEPMETER,file_misfit),'method':'SLSQP','bounds':RDF_bounds}))#,'options':{'maxiter':n_iter}}),niter=1000)
-                n_iter = n_iter+2000
-                success = res_RDF.success
-                RDF_initial_guess = res_RDF.x
-        dictionary_RDF = {}
-        dictionary_RDF['fit'] = res_RDF
-        RDF_fitting_params = pd.DataFrame([res_RDF.x],columns = ('Ts','Vs','K','T01','S1','Ta1','V01','V0/VL1','T02','S2'), index = ['fitted'])
-        RDF_DF_params = pd.concat([RDF_DF_params,RDF_fitting_params])
-        dictionary_RDF['fitting params'] = RDF_DF_params
-        #dictionary_RDF['params tried'] = RDF_params_tried
-        with open("/home/earthquakes2/homes/Dan/Rheology/Single_rheology_27_APR_23/{k}/fits/{u}/RDF/{k}_{u}_RDF_fit_dictionary_multi_phase_27_APR_23.txt".format(k=CREEPMETER,u=j), "wb") as tf:
-            pickle.dump(dictionary_RDF,tf)
-
-    else:
-        with open("/home/earthquakes2/homes/Dan/Rheology/Single_rheology_27_APR_23/{k}/fits/{u}/RDF/{k}_{u}_RDF_fit_dictionary_multi_phase_27_APR_23.txt".format(k=CREEPMETER,u=j), "rb") as tf:
-            dictionary_RDF = pickle.load(tf)
-            res_RDF = dictionary_RDF['fit']
-            RDF_DF_params = dictionary_RDF['fitting params']
-    return RDF_DF_params
-###################################################################################################
-def VSF_aSS_fitter(time,slip,cov_matrix_inv,no_phases,columns_VSF_aSS,j,CREEPMETER,VSF_aSS_DF_params,atest,file_misfit):
-    print('VSF_aSS: {k}'.format(k=j))
-    print ("Current date and time : ")
-    print (dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    isExistVSF_aSS = os.path.exists('../../Rheology/Single_rheology_27_APR_23/{k}/fits/{y}/VSF_aSS/{k}_{y}_VSF_aSS_fit_dictionary_multi_phase_27_APR_23.txt'.format(k=CREEPMETER,y=j))
-    if not isExistVSF_aSS:
-        #print('../../Rheology/Single_rheology_27_APR_23/{k}/fits/{y}/VSF_aSS/{k}_{y}_VSF_aSS_fit_dictionary_multi_phase_27_APR_23.txt'.format(k=CREEPMETER[q],y=j))
-        success = False
-        n_iter = 5000
-        VSF_aSS_bounds = VSF_aSS_DF_params.loc['bounds'].to_list()
-        VSF_aSS_initial_guess = VSF_aSS_DF_params.loc['initial'].to_list()
-        while success == False:
-            if success == False:
-                res_VSF_aSS = scipy.optimize.basinhopping(VSF_aSS_dromedary, VSF_aSS_initial_guess,\
-                accept_test = atest, minimizer_kwargs = ({'args':(time,slip,cov_matrix_inv,no_phases,\
-                columns_VSF_aSS,j,CREEPMETER,file_misfit),'method':'SLSQP','bounds':VSF_aSS_bounds}))#,'options':{'maxiter':n_iter}}),niter=1000)
-                n_iter = n_iter+2000
-                success = res_VSF_aSS.success
-                VSF_aSS_initial_guess = res_VSF_aSS.x
-        dictionary_VSF_aSS = {}
-        dictionary_VSF_aSS['fit'] = res_VSF_aSS
-        VSF_aSS_fitting_params = pd.DataFrame([res_VSF_aSS.x],columns = ('Ts','Vs','K','T01','S1','Ta1','V01','t1','T02','S2'), index = ['fitted'])
-        VSF_aSS_DF_params = pd.concat([VSF_aSS_DF_params,VSF_aSS_fitting_params])
-        dictionary_VSF_aSS['fitting params'] = VSF_aSS_DF_params
-        #dictionary_VSF_aSS['params tried'] = VSF_aSS_params_tried
-        with open("/home/earthquakes2/homes/Dan/Rheology/Single_rheology_27_APR_23/{k}/fits/{u}/VSF_aSS/{k}_{u}_VSF_aSS_fit_dictionary_multi_phase_27_APR_23.txt".format(k=CREEPMETER,u=j), "wb") as tf:
-            pickle.dump(dictionary_VSF_aSS,tf)
-
-    else:
-        with open("/home/earthquakes2/homes/Dan/Rheology/Single_rheology_27_APR_23/{k}/fits/{u}/VSF_aSS/{k}_{u}_VSF_aSS_fit_dictionary_multi_phase_27_APR_23.txt".format(k=CREEPMETER,u=j), "rb") as tf:
-            dictionary_VSF_aSS = pickle.load(tf)
-            res_VSF_aSS = dictionary_VSF_aSS['fit']
-            VSF_aSS_DF_params = dictionary_VSF_aSS['fitting params']
-    return VSF_aSS_DF_params
-###################################################################################################
-def VSF_bSS_fitter(time,slip,cov_matrix_inv,no_phases,columns_VSF_bSS,j,CREEPMETER,VSF_bSS_DF_params,atest,file_misfit):
-    print('VSF-bSS: {k}'.format(k=j))
-    print ("Current date and time : ")
-    print (dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    isExistVSF_bSS = os.path.exists('/home/earthquakes2/homes/Dan/Rheology/Single_rheology_27_APR_23/{k}/fits/{y}/VSF_bSS/{k}_{y}_VSF_bSS_fit_dictionary_multi_phase_27_APR_23.txt'.format(k=CREEPMETER,y=j))
-    if not isExistVSF_bSS:
-        #print('../../Rheology/Single_rheology_27_APR_23/{k}/fits/{y}/VSF_SS/{k}_{y}_VSF_bSS_fit_dictionary_multi_phase_27_APR_23.txt'.format(k=CREEPMETER[q],y=j))
-        success = False
-        n_iter = 5000
-        VSF_bSS_bounds = VSF_bSS_DF_params.loc['bounds'].to_list()
-        #print(VSF_bSS_bounds)
-        VSF_bSS_initial_guess = VSF_bSS_DF_params.loc['initial'].to_list()
-        while success == False:
-            if success == False:
-                res_VSF_bSS = scipy.optimize.basinhopping(VSF_bSS_dromedary, VSF_bSS_initial_guess,\
-                accept_test = atest, minimizer_kwargs = ({'args':(time,slip,cov_matrix_inv,no_phases,\
-                columns_VSF_bSS,j,CREEPMETER,file_misfit),'method':'SLSQP','bounds':VSF_bSS_bounds}))#,'options':{'maxiter':n_iter}}),niter=1000)
-                n_iter = n_iter+2000
-                success = res_VSF_bSS.success
-                VSF_bSS_initial_guess = res_VSF_bSS.x
-
-        dictionary_VSF_bSS = {}
-        dictionary_VSF_bSS['fit'] = res_VSF_bSS
-        VSF_bSS_fitting_params = pd.DataFrame([res_VSF_bSS.x],columns = ('Ts','Vs','K','T01','S1','Tau1','V01','A_B1','T02','S2'), index = ['fitted'])
-        VSF_bSS_DF_params = pd.concat([VSF_bSS_DF_params,VSF_bSS_fitting_params])
-        dictionary_VSF_bSS['fitting params'] = VSF_bSS_DF_params
-        #dictionary_VSF_SS['params tried'] = VSF_bSS_params_tried
-        with open("/home/earthquakes2/homes/Dan/Rheology/Single_rheology_27_APR_23/{k}/fits/{u}/VSF_bSS/{k}_{u}_VSF_bSS_fit_dictionary_multi_phase_27_APR_23.txt".format(k=CREEPMETER,u=j), "wb") as tf:
-            pickle.dump(dictionary_VSF_bSS,tf)
-    else:
-        with open("/home/earthquakes2/homes/Dan/Rheology/Single_rheology_27_APR_23/{k}/fits/{u}/VSF_bSS/{k}_{u}_VSF_bSS_fit_dictionary_multi_phase_27_APR_23.txt".format(k=CREEPMETER,u=j), "rb") as tf:
-            dictionary_VSF_bSS = pickle.load(tf)
-            res_VSF_SS = dictionary_VSF_bSS['fit']
-            VSF_bSS_DF_params = dictionary_VSF_bSS['fitting params']
-    return VSF_bSS_DF_params
-###################################################################################################
