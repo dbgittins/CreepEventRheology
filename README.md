@@ -1,5 +1,9 @@
 # CreepEventRheology
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+**Tags**: `fault mechanics` · `aseismic slip` · `creep events` · `rheology` · `geophysics` · `time series analysis`
+
 This repository models the shape of creep events on faults using different rheological formulations. It evaluates the fit of each model and quantifies model selection uncertainty using information-theoretic criteria (e.g., Akaike Information Criterion, AIC).
 
 The approach is particularly suited for studying aseismic slip transients and understanding near-surface fault mechanics.
