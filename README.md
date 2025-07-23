@@ -6,7 +6,7 @@ The approach is particularly suited for studying aseismic slip transients and un
 
 ## Features
 
-- Fits multiple rheological models (linear viscous, power-law, viscoplastic, and rate-and-state inspired forms)
+- Fits multiple rheological models (linear viscous, power-law, and rate-and-state inspired forms)
 - Computes AIC and delta-AIC for model comparison
 - Flags events with model selection uncertainty
 - Uses bootstrapping to assess the robustness of model support
